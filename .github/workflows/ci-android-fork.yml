@@ -17,6 +17,9 @@ jobs:
   build:
     if: github.repository_owner != 'kavishdevar'
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx6g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC" -Dkotlin.daemon.jvm.options="-Xmx3g,-XX:+UseParallelGC" -Dorg.gradle.workers.max=4'
     steps:
       - uses: actions/checkout@v5
         with:
