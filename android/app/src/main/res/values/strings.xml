@@ -289,4 +289,30 @@
     <string name="eq_low">Low</string>
     <string name="eq_mid">Mid</string>
     <string name="eq_high">High</string>
+    <string name="usage">Usage</string>
+    <string name="usage_worn_last_7_days">worn in the last 7 days</string>
+    <string name="usage_last_7_days">Last 7 days</string>
+    <string name="usage_total_wear_time">Total wear time</string>
+    <string name="usage_tracked_since">Tracked since %1$s</string>
+    <plurals name="usage_days_worn_count">
+        <item quantity="one">%d day worn</item>
+        <item quantity="other">%d days worn</item>
+    </plurals>
+    <string name="usage_times_worn">Times worn</string>
+    <string name="usage_times_unit">times</string>
+    <string name="usage_average_wear">Average per wear</string>
+    <string name="usage_per_wear">per wear</string>
+    <string name="usage_longest_wear">Longest wear</string>
+    <string name="usage_days_worn">Days worn</string>
+    <string name="usage_days_unit">days</string>
+    <string name="usage_first_worn">First worn</string>
+    <string name="usage_last_worn">Last worn</string>
+    <string name="usage_now">Now</string>
+    <string name="usage_in_ears">in your ears</string>
+    <string name="usage_empty_title">No usage yet</string>
+    <string name="usage_empty_description">LibrePods starts counting the next time you put your AirPods in.</string>
+    <string name="usage_footer">Recorded on this phone using in-ear detection. Time worn with other devices isn\'t included.</string>
+    <string name="unit_hours_short">h</string>
+    <string name="unit_minutes_short">min</string>
+    <string name="unit_seconds_short">s</string>
 </resources>

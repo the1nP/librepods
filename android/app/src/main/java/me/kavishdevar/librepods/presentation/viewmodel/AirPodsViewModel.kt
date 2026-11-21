@@ -53,6 +53,9 @@ import me.kavishdevar.librepods.data.Capability
 import me.kavishdevar.librepods.data.ControlCommandRepository
 import me.kavishdevar.librepods.data.CustomEq
 import me.kavishdevar.librepods.data.StemAction
+import me.kavishdevar.librepods.data.UsageStats
+import me.kavishdevar.librepods.data.UsageTracker
+import me.kavishdevar.librepods.data.demoUsageStats
 import me.kavishdevar.librepods.data.XposedRemotePrefProvider
 import me.kavishdevar.librepods.services.AirPodsService
 
@@ -725,6 +728,12 @@ class AirPodsViewModel(
                 automaticConnectionEnabled = enabled
             )
         }
+    }
+
+    fun loadUsageStats(): UsageStats {
+        if (isDemoMode) return demoUsageStats()
+        return UsageTracker.load(appContext, sharedPreferences.getString("mac_address", null))
+            .withOpenSession()
     }
 
     fun activateDemoMode() {

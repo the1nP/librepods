@@ -37,6 +37,7 @@ import me.kavishdevar.librepods.presentation.screens.RenameScreen
 import me.kavishdevar.librepods.presentation.screens.TransparencySettingsScreen
 import me.kavishdevar.librepods.presentation.screens.TroubleshootingScreen
 import me.kavishdevar.librepods.presentation.screens.UpdateHearingTestRoute
+import me.kavishdevar.librepods.presentation.screens.UsageScreen
 import me.kavishdevar.librepods.presentation.screens.VersionScreen
 import me.kavishdevar.librepods.presentation.screens.onboarding.OnboardingScreen
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
@@ -111,7 +112,14 @@ fun AppNavGraph(
                                 navigateToTroubleshooting = { navigate(Screen.Troubleshooting) },
                                 navigateToCallControlScreen = { navigate(Screen.CallControl(it)) },
                                 navigateToMicrophoneSettings = { navigate(Screen.MicrophoneSettings) },
+                                navigateToUsage = { navigate(Screen.Usage) },
                             )
+                        }
+
+                    Screen.Usage ->
+                        NavEntry(screen) {
+                            if (!airPodsViewModel.isReady) LoadingScreen()
+                            UsageScreen(airPodsViewModel)
                         }
 
                     Screen.Rename ->

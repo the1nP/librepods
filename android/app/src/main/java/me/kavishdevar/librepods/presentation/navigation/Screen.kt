@@ -62,6 +62,9 @@ sealed interface Screen: NavKey {
     data object Purchase: Screen
 
     @Serializable
+    data object Usage: Screen
+
+    @Serializable
     data object Equalizer: Screen
 
     @Serializable

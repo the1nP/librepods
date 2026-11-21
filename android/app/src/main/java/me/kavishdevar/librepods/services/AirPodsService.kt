@@ -99,6 +99,7 @@ import me.kavishdevar.librepods.data.BatteryStatus
 import me.kavishdevar.librepods.data.Capability
 import me.kavishdevar.librepods.data.CustomEq
 import me.kavishdevar.librepods.data.StemAction
+import me.kavishdevar.librepods.data.UsageTracker
 import me.kavishdevar.librepods.data.XposedRemotePrefProvider
 import me.kavishdevar.librepods.data.isHeadTrackingData
 import me.kavishdevar.librepods.presentation.overlays.IslandType
@@ -692,6 +693,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
 //                    }
 
                 } else if (intent?.action == AirPodsNotifications.AIRPODS_DISCONNECTED) {
+                    UsageTracker.endSession(this@AirPodsService)
                     device = null
 //                    isConnectedLocally = false
                     popupShown = false
@@ -1238,6 +1240,10 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
         )
         var justEnabledA2dp = false
         earDetectionNotification.setStatus(earDetection)
+        if (earDetection.size >= 2) {
+            val worn = earDetection.takeLast(2).any { it == 0x00.toByte() }
+            UsageTracker.onWearStateChanged(this, device?.address ?: macAddress.ifEmpty { null }, worn)
+        }
         if (config.earDetectionEnabled) {
             val data = earDetection.copyOfRange(earDetection.size - 2, earDetection.size)
             inEar = data[0] == 0x00.toByte() && data[1] == 0x00.toByte()
@@ -3103,6 +3109,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         clearPacketLogs()
+        UsageTracker.endSession(this)
         Log.d(TAG, "Service stopped is being destroyed for some reason!")
 
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
