@@ -312,6 +312,9 @@
     <string name="usage_empty_title">No usage yet</string>
     <string name="usage_empty_description">LibrePods starts counting the next time you put your AirPods in.</string>
     <string name="usage_footer">Recorded on this phone using in-ear detection. Time worn with other devices isn\'t included.</string>
+    <string name="usage_worn_this_week">%1$s worn this week</string>
+    <string name="charging">Charging</string>
+    <string name="battery_left_right">Left %1$d%% · Right %2$d%%</string>
     <string name="unit_hours_short">h</string>
     <string name="unit_minutes_short">min</string>
     <string name="unit_seconds_short">s</string>

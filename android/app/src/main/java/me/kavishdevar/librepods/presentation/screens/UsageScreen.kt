@@ -42,8 +42,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,6 +59,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -68,6 +74,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,6 +106,10 @@ private class UsagePalette(
     val secondary: Color,
     val fontFamily: FontFamily?,
     val cornerRadius: Int,
+    // Material: cookie shape behind the case, grouped tile corners and a highlighted live tile
+    val expressive: Boolean,
+    val liveTile: Color,
+    val liveContent: Color,
 )
 
 @Composable
@@ -128,6 +139,9 @@ private fun rememberUsagePalette(): UsagePalette {
                 secondary = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.55f),
                 fontFamily = sfPro,
                 cornerRadius = 28,
+                expressive = false,
+                liveTile = if (isDark) Color.White.copy(alpha = 0.07f) else Color.White.copy(alpha = 0.72f),
+                liveContent = if (isDark) Color.White else Color.Black,
             )
         }
         DesignSystem.Material -> UsagePalette(
@@ -135,7 +149,7 @@ private fun rememberUsagePalette(): UsagePalette {
             heroBackground = Brush.verticalGradient(listOf(colors.primaryContainer, colors.primaryContainer)),
             heroBorder = Color.Transparent,
             heroContent = colors.onPrimaryContainer,
-            heroSecondary = colors.onPrimaryContainer.copy(alpha = 0.75f),
+            heroSecondary = colors.onPrimaryContainer.copy(alpha = 0.78f),
             bar = colors.onPrimaryContainer.copy(alpha = 0.25f),
             barToday = colors.primary,
             tile = colors.surfaceBright,
@@ -143,7 +157,10 @@ private fun rememberUsagePalette(): UsagePalette {
             content = colors.onSurface,
             secondary = colors.onSurfaceVariant,
             fontFamily = null,
-            cornerRadius = 24,
+            cornerRadius = 28,
+            expressive = true,
+            liveTile = colors.tertiaryContainer,
+            liveContent = colors.onTertiaryContainer,
         )
     }
 }
@@ -270,13 +287,13 @@ private fun UsageContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 TileRow {
                     StatTile(
-                        palette, it,
+                        palette, it, tileShape(palette, row = 0, column = 0),
                         label = stringResource(R.string.usage_times_worn),
                         value = AnnotatedString("%,d".format(stats.sessionCount)),
                         caption = stringResource(R.string.usage_times_unit)
                     )
                     StatTile(
-                        palette, it,
+                        palette, it, tileShape(palette, row = 0, column = 1),
                         label = stringResource(R.string.usage_average_wear),
                         value = durationText(stats.averageSessionMs, 34.sp, 16.sp),
                         caption = stringResource(R.string.usage_per_wear)
@@ -285,13 +302,13 @@ private fun UsageContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 TileRow {
                     StatTile(
-                        palette, it,
+                        palette, it, tileShape(palette, row = 1, column = 0),
                         label = stringResource(R.string.usage_longest_wear),
                         value = durationText(stats.longestSessionMs, 34.sp, 16.sp),
                         caption = null
                     )
                     StatTile(
-                        palette, it,
+                        palette, it, tileShape(palette, row = 1, column = 1),
                         label = stringResource(R.string.usage_days_worn),
                         value = AnnotatedString(stats.daysWorn.toString()),
                         caption = stringResource(R.string.usage_days_unit)
@@ -300,14 +317,15 @@ private fun UsageContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 TileRow {
                     StatTile(
-                        palette, it,
+                        palette, it, tileShape(palette, row = 2, column = 0),
                         label = stringResource(R.string.usage_first_worn),
                         value = AnnotatedString(stats.firstWornAt?.let { t -> toLocalDate(t).format(dateFormatter) } ?: "—"),
                         caption = null,
                         valueSize = 22.sp
                     )
                     StatTile(
-                        palette, it,
+                        palette, it, tileShape(palette, row = 2, column = 1),
+                        live = stats.currentSessionStart != null,
                         label = stringResource(R.string.usage_last_worn),
                         value = AnnotatedString(
                             if (stats.currentSessionStart != null) stringResource(R.string.usage_now)
@@ -357,14 +375,27 @@ private fun HeroCard(
                 fontFamily = palette.fontFamily
             )
         )
-        Image(
-            bitmap = ImageBitmap.imageResource(caseRes),
-            contentDescription = title,
+        Box(
             modifier = Modifier
                 .padding(vertical = 8.dp)
-                .size(120.dp)
-                .align(Alignment.CenterHorizontally)
-        )
+                .fillMaxWidth()
+                .height(140.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (palette.expressive) {
+                val cookie = remember { MaterialShapes.Cookie9Sided.normalized().toShape() }
+                Box(
+                    modifier = Modifier
+                        .size(140.dp)
+                        .background(palette.heroContent.copy(alpha = 0.12f), cookie)
+                )
+            }
+            Image(
+                bitmap = ImageBitmap.imageResource(caseRes),
+                contentDescription = title,
+                modifier = Modifier.size(120.dp)
+            )
+        }
         Text(
             text = durationText(weekWornMs, 64.sp, 28.sp),
             style = TextStyle(
@@ -393,15 +424,15 @@ private fun WeekBars(palette: UsagePalette, days: List<Pair<LocalDate, Long>>, t
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
-                        .width(22.dp)
-                        .height(48.dp),
+                        .width(if (palette.expressive) 28.dp else 22.dp)
+                        .height(if (palette.expressive) 64.dp else 48.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .fillMaxHeight((ms.toFloat() / max).coerceIn(0.06f, 1f))
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(RoundedCornerShape(if (palette.expressive) 10.dp else 6.dp))
                             .background(if (day == today) palette.barToday else palette.bar)
                     )
                 }
@@ -431,12 +462,14 @@ private fun TileRow(content: @Composable (Modifier) -> Unit) {
 private fun UsageTile(
     palette: UsagePalette,
     modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(palette.cornerRadius.dp),
+    color: Color = palette.tile,
     content: @Composable () -> Unit
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(palette.cornerRadius.dp))
-            .background(palette.tile)
+            .clip(shape)
+            .background(color)
             .padding(horizontal = 18.dp, vertical = 16.dp)
     ) {
         content()
@@ -447,28 +480,59 @@ private fun UsageTile(
 private fun StatTile(
     palette: UsagePalette,
     modifier: Modifier,
+    shape: Shape,
     label: String,
     value: AnnotatedString,
     caption: String?,
     valueSize: TextUnit = 34.sp,
+    live: Boolean = false,
 ) {
-    UsageTile(palette, modifier) {
-        TileLabel(palette, label)
+    val highlight = live && palette.expressive
+    UsageTile(palette, modifier, shape, if (highlight) palette.liveTile else palette.tile) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontSize = 15.sp,
+                color = if (highlight) palette.liveContent else palette.secondary,
+                fontFamily = palette.fontFamily
+            )
+        )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = value,
             style = TextStyle(
                 fontSize = valueSize,
                 fontWeight = FontWeight.Bold,
-                color = palette.content,
+                color = if (highlight) palette.liveContent else palette.content,
                 fontFamily = palette.fontFamily
             )
         )
         caption?.let {
             Spacer(modifier = Modifier.height(2.dp))
-            TileCaption(palette, it)
+            Text(
+                text = it,
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    color = if (highlight) palette.liveContent else palette.secondary,
+                    fontFamily = palette.fontFamily
+                )
+            )
         }
     }
+}
+
+// Material groups the six tiles: large outer corners, small inner ones.
+private fun tileShape(palette: UsagePalette, row: Int, column: Int): Shape {
+    if (!palette.expressive) return RoundedCornerShape(palette.cornerRadius.dp)
+    val large: Dp = palette.cornerRadius.dp
+    val small: Dp = 8.dp
+    val lastRow = 2
+    return RoundedCornerShape(
+        topStart = if (row == 0 && column == 0) large else small,
+        topEnd = if (row == 0 && column == 1) large else small,
+        bottomEnd = if (row == lastRow && column == 1) large else small,
+        bottomStart = if (row == lastRow && column == 0) large else small,
+    )
 }
 
 @Composable
@@ -515,3 +579,29 @@ private fun durationText(ms: Long, numberSize: TextUnit, unitSize: TextUnit): An
 
 private fun toLocalDate(epochMs: Long): LocalDate =
     Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate()
+
+@Composable
+internal fun usageDurationLabel(ms: Long): String {
+    val hours = ms / 3_600_000
+    val minutes = (ms % 3_600_000) / 60_000
+    val h = stringResource(R.string.unit_hours_short)
+    val min = stringResource(R.string.unit_minutes_short)
+    return if (hours > 0) "$hours$h $minutes$min" else "$minutes$min"
+}
+
+internal val UsageIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "Usage",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(4f, 12f); lineTo(7f, 12f); lineTo(7f, 20f); lineTo(4f, 20f); close()
+            moveTo(9f, 6f); lineTo(12f, 6f); lineTo(12f, 20f); lineTo(9f, 20f); close()
+            moveTo(14f, 10f); lineTo(17f, 10f); lineTo(17f, 20f); lineTo(14f, 20f); close()
+            moveTo(19f, 4f); lineTo(22f, 4f); lineTo(22f, 20f); lineTo(19f, 20f); close()
+        }
+    }.build()
+}

@@ -55,6 +55,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -108,6 +109,8 @@ import me.kavishdevar.librepods.presentation.MaterialIcons
 import me.kavishdevar.librepods.presentation.components.AboutCard
 import me.kavishdevar.librepods.presentation.components.AudioSettings
 import me.kavishdevar.librepods.presentation.components.BatteryView
+import me.kavishdevar.librepods.presentation.components.ListItemOrientation
+import me.kavishdevar.librepods.presentation.components.MaterialBatteryStatus
 import me.kavishdevar.librepods.presentation.components.CallControlSettings
 import me.kavishdevar.librepods.presentation.components.ConnectionSettings
 import me.kavishdevar.librepods.presentation.components.HearingHealthSettings
@@ -123,6 +126,7 @@ import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsUiState
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import me.kavishdevar.librepods.presentation.viewmodel.demoState
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.min
@@ -158,8 +162,16 @@ fun AirPodsSettingsRoute(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
+        var usageWeekWornMs by remember { mutableStateOf<Long?>(null) }
+        LaunchedEffect(viewModel.isReady) {
+            if (viewModel.isReady) {
+                val today = LocalDate.now()
+                usageWeekWornMs = viewModel.loadUsageStats().wornBetween(today.minusDays(6), today)
+            }
+        }
         AirPodsSettingsScreen(
             state = state,
+            usageWeekWornMs = usageWeekWornMs,
 
             topPadding = topPadding,
             bottomPadding = bottomPadding,
@@ -204,6 +216,7 @@ fun AirPodsSettingsRoute(
 @Composable
 fun AirPodsSettingsScreen(
         state: AirPodsUiState,
+        usageWeekWornMs: Long? = null,
 
         topPadding: Dp = 16.dp,
         bottomPadding: Dp = 16.dp,
@@ -312,11 +325,22 @@ fun AirPodsSettingsScreen(
             }
 
             item(key = "battery") {
-                BatteryView(
-                    batteryList = state.battery,
-                    budsRes = state.instance?.model?.budsRes ?: R.drawable.airpods_pro_2_buds,
-                    caseRes = state.instance?.model?.caseRes ?: R.drawable.airpods_pro_2_case
-                )
+                val model = state.instance?.model
+                if (LocalDesignSystem.current == DesignSystem.Material) {
+                    MaterialBatteryStatus(
+                        batteryList = state.battery,
+                        budsRes = model?.budsRes ?: R.drawable.airpods_pro_2_buds,
+                        leftRes = model?.leftBudsRes ?: R.drawable.airpods_pro_2_left,
+                        rightRes = model?.rightBudsRes ?: R.drawable.airpods_pro_2_right,
+                        caseRes = model?.caseRes ?: R.drawable.airpods_pro_2_case
+                    )
+                } else {
+                    BatteryView(
+                        batteryList = state.battery,
+                        budsRes = model?.budsRes ?: R.drawable.airpods_pro_2_buds,
+                        caseRes = model?.caseRes ?: R.drawable.airpods_pro_2_case
+                    )
+                }
             }
             item(key = "spacer_battery") {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -334,10 +358,39 @@ fun AirPodsSettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
             item(key = "usage") {
-                StyledListItem(
-                    name = stringResource(R.string.usage),
-                    onClick = navigateToUsage,
-                )
+                if (LocalDesignSystem.current == DesignSystem.Material) {
+                    StyledListItem(
+                        name = stringResource(R.string.usage),
+                        description = usageWeekWornMs?.takeIf { it > 0 }?.let {
+                            stringResource(R.string.usage_worn_this_week, usageDurationLabel(it))
+                        },
+                        orientation = ListItemOrientation.Vertical,
+                        onClick = navigateToUsage,
+                        leadingContent = {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primaryContainer,
+                                        MaterialShapes.Cookie4Sided.normalized().toShape()
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = UsageIcon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                    )
+                } else {
+                    StyledListItem(
+                        name = stringResource(R.string.usage),
+                        onClick = navigateToUsage,
+                    )
+                }
             }
 
             val hasHearingAidCapability =
