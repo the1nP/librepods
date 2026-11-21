@@ -383,7 +383,7 @@ private fun HeroCard(
             contentAlignment = Alignment.Center
         ) {
             if (palette.expressive) {
-                val cookie = remember { MaterialShapes.Cookie9Sided.normalized().toShape() }
+                val cookie = remember { MaterialShapes.Cookie9Sided.normalized() }.toShape()
                 Box(
                     modifier = Modifier
                         .size(140.dp)

@@ -111,7 +111,7 @@ private fun BatteryHero(
     right: Int?,
 ) {
     val colors = MaterialTheme.colorScheme
-    val cookie = remember { MaterialShapes.Cookie9Sided.normalized().toShape() }
+    val cookie = remember { MaterialShapes.Cookie9Sided.normalized() }.toShape()
     Column(
         modifier = Modifier
             .fillMaxWidth()
