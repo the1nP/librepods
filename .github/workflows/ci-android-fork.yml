@@ -1,0 +1,44 @@
+name: Android CI (fork)
+
+# The main Android CI needs Blacksmith runners and release signing secrets,
+# which only the upstream repository has. This builds an unsigned debug APK
+# on GitHub-hosted runners so forks still get a compile check.
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'android/**'
+      - '.github/workflows/ci-android-fork.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.repository_owner != 'kavishdevar'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Accept Licenses
+        run: yes | sdkmanager --licenses
+      - name: Install NDK
+        run: sdkmanager "ndk;30.0.14904198"
+      - name: Build debug APK
+        run: ./gradlew assembleFossDebug
+        working-directory: android
+      - uses: actions/upload-artifact@v7
+        with:
+          name: apk-debug
+          path: android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
